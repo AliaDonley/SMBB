@@ -1,0 +1,55 @@
+##Aligned SMBB test samples to Alexis genome. Used BWA. 
+
+Used SubBWAAlign.sh
+
+#!/bin/sh 
+#SBATCH --time=96:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=26
+#SBATCH --account=usubio-kp
+#SBATCH --partition=usubio-kp
+#SBATCH --job-name=Alignment
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=alia.donley@usu.edu
+
+module load samtools
+module load bwa
+
+cd /uufs/chpc.utah.edu/common/home/u6047808/SMBB/aDNA-Mix
+
+perl BWAalign.pl parsed_xa*.trimmed.fastq
+
+
+
+
+To run: BWAalign.pl
+
+#!/usr/bin/perl
+#
+# alignment with bwa mem 
+#
+
+
+use Parallel::ForkManager;
+my $max = 30;
+my $pm = Parallel::ForkManager->new($max);
+my $genome = "/uufs/chpc.utah.edu/common/home/u6047808/Xerces/genome/Lygdamus_Xer_genomes/Alexis_ref_genome/GCA_905404095.1_ilGlaAlex1.1_genomic.fna";
+
+FILES:
+foreach my $fq (@ARGV){
+        $pm->start and next FILES; ## fork
+       
+         my ($id) = $fq =~ m/^(parsed_[a-z]+)\.trimmed\.fastq$/ or die "Bad filename format: $fq\n";
+         my $bam = "$id.bam";
+         my  $cmd = "bwa mem -t 1 -k 19 -r 1.5 $genome $fq | " .
+              "samtools sort -@ 2 -O BAM -o $bam - && " .
+              "samtools index -@ 2 $bam";
+
+        print "Running: $cmd\n";
+    my $ret = system($cmd);
+    warn "FAILED: $fq (exit code $ret)\n" if $ret != 0;
+
+    $pm->finish;
+}
+
+$pm->wait_all_children;
