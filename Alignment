@@ -51,5 +51,5 @@ foreach my $fq (@ARGV){
 
     $pm->finish;
 }
-
+d
 $pm->wait_all_children;
