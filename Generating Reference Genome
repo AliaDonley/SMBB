@@ -1,0 +1,10 @@
+Generating a PacBio genome from raw reads
+
+##raw reads obtained from the BYU sequencing center from one female collected August 2025. Using PacBio HiFi assembly HiFiasm from Purdue. 
+
+Raw data is in /uufs/chpc.utah.edu/common/home/gompert-group6/data/genome_e_pallescens/
+All other work being done in /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome/genome_e_pallescens
+Downloaded hifiasm from github by cd-ing into directory and using 'make'. Put it into a bin in my home directory and used this path in my scripts when needed. 
+
+Converted the bam to fastq file using samtools fastq with script bam2fastq.sbatch
+Preliminary results on how the genome looked using hifiasm using script 
