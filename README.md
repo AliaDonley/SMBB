@@ -9,6 +9,7 @@ Raw data in /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/Reference
 Hifiasm: https://genpipes.readthedocs.io/en/genpipes-v-3.6.2/user_guide/pipelines/gp_pacbio.html
 
 ## Ran hifiasm.sh with sbatch 
+```sh
 #!/bin/sh
 #SBATCH --time=240:00:00
 #SBATCH --nodes=1
@@ -30,7 +31,7 @@ cd /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome
 awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.p_ctg.gfa > smb_hifiasm_default.bp.p_ctg.fasta
 awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.hap1.p_ctg.gfa > smb_hifiasm_default.bp.hap1.p_ctg.fasta
 awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.hap2.p_ctg.gfa > smb_hifiasm_default.bp.hap2.p_ctg.fasta
-
+```
 
 To get the 3 outputs:
   a. smb_hifiasm_default.bp.p_ctg.fasta
@@ -48,8 +49,8 @@ The Hifiasm assembly looked odd.
 Using BUSCO (Benchmarking Universal Single Copy Orthologs) to check the assembly for completeness. Downloaded the lepidoptera_odb10 data set and put the path in my shell script so I could use it offline on my interactive node. 
 
 ## Ran busco.sh with sbatch
-
 busco.sh
+```sh
 #!/bin/sh
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
@@ -72,10 +73,10 @@ busco -i smb_hifiasm_default.bp.p_ctg.fasta \
       -c 24 \
       --offline \
       --download_path /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome/busco_downloads
+```
 
-
-## Output: 
-table as an output and direcotry with logs in busco_p_ctg
+Output: table as an output and direcotry with logs in busco_p_ctg
+```
 --------------------------------------------------
 	|Results from dataset lepidoptera_odb10           |
 	--------------------------------------------------
@@ -87,7 +88,7 @@ table as an output and direcotry with logs in busco_p_ctg
 	|362	Missing BUSCOs (M)                        |
 	|5286	Total BUSCO groups searched               |
 	--------------------------------------------------
-
+```
 p_ctg has actual unresolved haplo duplication then. Going to try purging duplicates. Identifying contigs or portion of the contigs that are redundant and removing them. 
 
 Going to follow these steps:
