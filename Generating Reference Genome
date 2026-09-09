@@ -8,3 +8,9 @@ Downloaded hifiasm from github by cd-ing into directory and using 'make'. Put it
 
 Converted the bam to fastq file using samtools fastq with script bam2fastq.sbatch
 Preliminary results on how the genome looked using hifiasm using script 
+
+Decided to run with Hifiasm. 
+Piped the .gfa to .fasta conversion via awk directly into same slurm script for all three outputs (p_ctg, hap1, hap2) so single job
+confirms whether whole pipeline worked. 
+Ran with sbatch hifiasm.sh
+Reads: m84100_251120_201916_s3.hifi_reads.fastq (PacBio Revio HiFi/CCS) assembled with hifiasm
