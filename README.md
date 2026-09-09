@@ -6,26 +6,76 @@
 Raw data in /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome/genome_e_pallescens
 
 ## Decided to use Hifiasm to assemble the Pacbio sequence data from BYU Genomics Core. We have HiFi (CCS, high-accuracy) data. 
-
 Hifiasm: https://genpipes.readthedocs.io/en/genpipes-v-3.6.2/user_guide/pipelines/gp_pacbio.html
 
-Ran hifiasm.sh with sbatch to get the 3 outputs:
+## Ran hifiasm.sh with sbatch 
+#!/bin/sh
+#SBATCH --time=240:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=24
+#SBATCH --mem=200G
+#SBATCH --account=gompert-np
+#SBATCH --partition=gompert-np
+#SBATCH --job-name=hifiasm
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=alia.donley@usu.edu
+cd /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome
+
+~/bin/hifiasm \
+        -t 24 \
+        -o smb_hifiasm_default \
+        m84100_251120_201916_s3.hifi_reads.fastq
+
+# Convert primary contig gfa to fasta right after, so success is verifiable in one job
+awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.p_ctg.gfa > smb_hifiasm_default.bp.p_ctg.fasta
+awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.hap1.p_ctg.gfa > smb_hifiasm_default.bp.hap1.p_ctg.fasta
+awk '/^S/{print ">"$2"\n"$3}' smb_hifiasm_default.bp.hap2.p_ctg.gfa > smb_hifiasm_default.bp.hap2.p_ctg.fasta
+
+
+To get the 3 outputs:
   a. smb_hifiasm_default.bp.p_ctg.fasta
   b. smb_hifiasm_default.bp.hap1.p_ctg.fasta
   c. smb_hifiasm_default.bp.hap2.p_ctg.fasta
 
-
-## Check contents and size of outputs with
-seqkit stats smb_hifiasm_default.bp.p_ctg.fasta smb_hifiasm_default.bp.hap1.p_ctg.fasta smb_hifiasm_default.bp.hap2.p_ctg.fasta
-
-
+### Check contents and size of outputs 
+with: seqkit stats smb_hifiasm_default.bp.p_ctg.fasta smb_hifiasm_default.bp.hap1.p_ctg.fasta smb_hifiasm_default.bp.hap2.p_ctg.fasta
 
 The Hifiasm assembly looked odd. 
-  a. p_ctg (the primary contig), a mostly happloid rep of genome hifiasm outputs where it has         tried to merge the two haplotypes into one consensus sequence per genomic region. 
-  b. hap1/hap2 (a_ctg in older versions) are the phased haplotype assemblies. Hifiasms attempt to     keep each parental hap. separate rather than combining. 
+  a. p_ctg (the primary contig), a mostly happloid rep of genome hifiasm outputs where it has tried to merge the two haplotypes into one consensus sequence per genomic region. 
+  b. hap1/hap2 (a_ctg in older versions) are the phased haplotype assemblies. Hifiasms attempt to keep each parental hap. separate rather than combining. 
 
-  Using BUSCO (Benchmarking Universal Single Copy Orthologs) to check the assembly for completeness. 
+## BUSCO
+Using BUSCO (Benchmarking Universal Single Copy Orthologs) to check the assembly for completeness. Downloaded the lepidoptera_odb10 data set and put the path in my shell script so I could use it offline on my interactive node. 
 
+## Ran busco.sh with sbatch
+
+busco.sh
+#!/bin/sh
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=24
+#SBATCH --mem=64G
+#SBATCH --account=gompert-np
+#SBATCH --partition=gompert-np
+#SBATCH --job-name=busco_pctg
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=alia.donley@usu.edu
+
+cd /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome
+
+module load busco
+
+busco -i smb_hifiasm_default.bp.p_ctg.fasta \
+      -l lepidoptera_odb10 \
+      -o busco_p_ctg \
+      -m genome \
+      -c 24 \
+      --offline \
+      --download_path /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome/busco_downloads
+
+
+## Output: 
+table as an output and direcotry with logs in busco_p_ctg
 --------------------------------------------------
 	|Results from dataset lepidoptera_odb10           |
 	--------------------------------------------------
@@ -55,6 +105,8 @@ Something worth noting from a github and discussion page
   a. This workflow works really good with Hifiasm, but not as well with IPA and Flye assemblies
   b. Evaluate the purged assembly with Busco afterwards. Make sure you didn't over correct. Watch to make sure the Complete (C) percentage doesn't drop even as Duplicated (D) falls. 
 
+
+## Purging
 
   
   
