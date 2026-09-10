@@ -109,5 +109,85 @@ Something worth noting from a github and discussion page
 
 ## Purging
 
-  
+set up purge_dups to fix the duplication error we think we're seeing. Used minimap 2 and a conda environment for genome assembly. Detailed notes on this can be found written into the actual script above. Bare bone notes below in 
+
+purge_dups.sh
+```sh
+#!/bin/sh
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=24
+#SBATCH --mem=64G
+#SBATCH --account=gompert-np
+#SBATCH --partition=gompert-np
+#SBATCH --job-name=purge_dups
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=alia.donley@usu.edu
+
+cd /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome
+
+source ~/miniforge3/etc/profile.d/conda.sh
+conda activate genome_assembly
+module load minimap2   # if not also installed in the conda env
+
+ASM=smb_hifiasm_default.bp.p_ctg.fasta
+READS=m84100_251120_201916_s3.hifi_reads.fastq
+
+mkdir -p purge_dups_out
+cd purge_dups_out
+
+# Step 1: map HiFi reads back to the primary assembly
+minimap2 -x map-hifi -t 24 ../$ASM ../$READS | gzip -c > reads.paf.gz
+
+# Step 2: calculate coverage stats and cutoffs
+pbcstat reads.paf.gz
+calcuts PB.stat > cutoffs 2> calcuts.log
+
+# Step 3: self-align the assembly to find duplicate regions
+split_fa ../$ASM > asm.split.fasta
+minimap2 -x asm5 -t 24 -DP asm.split.fasta asm.split.fasta | gzip -c > asm.split.self.paf.gz
+
+# Step 4: identify duplicates
+purge_dups -2 -T cutoffs -c PB.base.cov asm.split.self.paf.gz > dups.bed 2> purge_dups.log
+
+# Step 5: extract the purged (cleaned) sequences
+get_seqs -e dups.bed ../$ASM
+```
+ Results are as follows (seqkit stats purge_dups_out/purged.fa purge_dups_out/hap.fa)
+ ```
+ file                      format  type  num_seqs      sum_len  min_len   avg_len  max_len
+purge_dups_out/purged.fa  FASTA   DNA     11,108  574,738,915    5,055    51,741  748,165
+purge_dups_out/hap.fa     FASTA   DNA      4,665  171,620,155    5,784  36,788.9  584,241
+```
+
+Rerun BUSCO on purged files using busco_purged.sh to confirm the Duplicated (D) dripped from the origional 11.9% and the Complete (C) did not trop much from the original 90.3%. 
+
+busco_purged.sh
+```sh
+#!/bin/sh
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=24
+#SBATCH --mem=64G
+#SBATCH --account=gompert-np
+#SBATCH --partition=gompert-np
+#SBATCH --job-name=busco_purged
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=alia.donley@usu.edu
+
+cd /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome
+
+module load busco
+
+busco -i purge_dups_out/purged.fa \
+      -l lepidoptera_odb10 \
+      -o busco_purged \
+      -m genome \
+      -c 24 \
+      -f \
+      --offline \
+      --download_path /uufs/chpc.utah.edu/common/home/u6047808/sandmountain_blue/ReferenceGenome/busco_downloads
+```
+
+
   
