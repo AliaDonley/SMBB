@@ -91,6 +91,20 @@ Output: table as an output and direcotry with logs in busco_p_ctg
 ```
 p_ctg has actual unresolved haplo duplication then. Going to try purging duplicates. Identifying contigs or portion of the contigs that are redundant and removing them. 
 
+Also ran BUSCO on haplo1 with busco_hap1.sh. Got a summary table with: cat busco_hap1/short_summary*.txt
+```sh
+***** Results: *****
+
+	C:84.0%[S:77.2%,D:6.8%],F:3.6%,M:12.4%,n:5286	   
+	4444	Complete BUSCOs (C)			   
+	4082	Complete and single-copy BUSCOs (S)	   
+	362	Complete and duplicated BUSCOs (D)	   
+	191	Fragmented BUSCOs (F)			   
+	651	Missing BUSCOs (M)			   
+	5286	Total BUSCO groups searched		   
+
+```
+
 Going to follow these steps:
   a. Map HiFi reads back to primary assembly using minimap2, getting read-depth coverage across contigs
   b. calculate coverage stats and cutoffs using pbcstat and calcuts. This step identifies coverage thresholds that seperate typical single copy regions from too high coverage duplicate regions
