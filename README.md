@@ -204,4 +204,5 @@ busco -i purge_dups_out/purged.fa \
 ```
 
 
-  
+  Decided to rerun hifiasm on the data with more strict parameters. The very first run was done with the -s similarity threshold for purging duplicate haplotigs at .55. Second try (hifiamsm_retry.sh), lowered -s to .45. This pushed us in the right direction, as the haplotype imbalance shrank from 170mb to 126mb, but p_ctg was still a bit bigger than either haplotype. Did not to a busco on .45. Ran hifiasm with -s as .35. A higher s required sequences to be more similar before calling them dupicates=more conservative purging= more sequence gets kept as different. 
+  Lower s calls duplicates more readily, sequences with a lower similarity bar=more aggressive purging= more sequence gets removed
